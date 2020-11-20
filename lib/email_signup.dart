@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_with_flutter/service/authentication.dart';
 import 'package:flutter/material.dart';
 
 class EmailSignUp extends StatefulWidget {
@@ -9,14 +9,11 @@ class EmailSignUp extends StatefulWidget {
 
 class _EmailSignUpState extends State<EmailSignUp> {
   bool isLoading = false;
+  final authService = AuthenticationService();
   final _formKey = GlobalKey<FormState>();
-  FirebaseAuth firebaseAuth = FirebaseAuth.instance;
-  DatabaseReference dbRef =
-      FirebaseDatabase.instance.reference().child("Users");
   TextEditingController emailController = TextEditingController();
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
-  TextEditingController ageController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -69,25 +66,6 @@ class _EmailSignUpState extends State<EmailSignUp> {
               Padding(
                 padding: EdgeInsets.all(20.0),
                 child: TextFormField(
-                  controller: ageController,
-                  decoration: InputDecoration(
-                    labelText: "Enter Age",
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                  ),
-                  // The validator receives the text that the user has entered.
-                  validator: (value) {
-                    if (value.isEmpty) {
-                      return 'Enter Age';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(20.0),
-                child: TextFormField(
                   obscureText: true,
                   controller: passwordController,
                   decoration: InputDecoration(
@@ -114,15 +92,17 @@ class _EmailSignUpState extends State<EmailSignUp> {
                     : RaisedButton(
                         color: Colors.lightBlue,
                         onPressed: () {
+                          this.setState(() {
+                            this.isLoading = true;
+                          });
                           if (_formKey.currentState.validate()) {
-                            setState(() {
-                              isLoading = true;
-                            });
+                            authService.signUp(
+                                email: emailController.value.text,
+                                password: passwordController.value.text);
                           }
                         },
-                        child: Text('Submit'),
-                      ),
-              )
+                        child: Text('Submit')),
+              ),
             ]))));
   }
 }

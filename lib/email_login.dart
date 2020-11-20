@@ -1,5 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_with_flutter/home.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:firebase_with_flutter/service/authentication.dart';
+import 'package:firebase_with_flutter/model/user.dart';
 import 'package:flutter/material.dart';
 
 class EmailLogIn extends StatefulWidget {
@@ -9,8 +10,10 @@ class EmailLogIn extends StatefulWidget {
 
 class _EmailLogInState extends State<EmailLogIn> {
   final _formKey = GlobalKey<FormState>();
+  final authService = AuthenticationService();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  User user;
 
   bool isLoading = false;
 
@@ -72,29 +75,13 @@ class _EmailLogInState extends State<EmailLogIn> {
                     : RaisedButton(
                         color: Colors.lightBlue,
                         onPressed: () {
+                          this.setState(() {
+                            this.isLoading = true;
+                          });
                           if (_formKey.currentState.validate()) {
-                            setState(() {
-                              final fb = FirebaseAuth.instance;
-                              fb
-                                  .signInWithEmailAndPassword(
-                                      email: emailController.value.text,
-                                      password: passwordController.value.text)
-                                  .then((user) => {
-                                        if (user == null)
-                                          {
-                                            print(
-                                                'User is currently signed out!')
-                                          }
-                                        else
-                                          {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => Home(
-                                                        uid: user.user.uid)))
-                                          }
-                                      });
-                            });
+                            authService.signIn(
+                                email: emailController.value.text,
+                                password: passwordController.value.text);
                           }
                         },
                         child: Text('Submit')),

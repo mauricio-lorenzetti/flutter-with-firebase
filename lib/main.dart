@@ -1,67 +1,56 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_with_flutter/service/authentication.dart';
+import 'package:firebase_with_flutter/model/user.dart';
+import 'package:firebase_with_flutter/service/database.dart';
 import 'package:flutter/material.dart';
-import 'package:splashscreen/splashscreen.dart';
+import 'package:provider/provider.dart';
 
 import 'home.dart';
-import 'signup.dart';
+import 'signin.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Expande Telecom',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return MultiProvider(
+      providers: [
+        Provider<AuthenticationService>(create: (_) => AuthenticationService()),
+        StreamProvider(
+            create: (context) =>
+                context.read<AuthenticationService>().authStateChanges),
+        StreamProvider<QuerySnapshot>(
+            create: (context) => DatabaseService().users)
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Expande Telecom',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: AuthenticationWrapper(),
       ),
-      home: IntroScreen(),
     );
   }
 }
 
-class IntroScreen extends StatefulWidget {
-  @override
-  _IntroScreenState createState() => _IntroScreenState();
-}
-
-class _IntroScreenState extends State<IntroScreen> {
-  @override
-  void initState() {
-    super.initState();
-    FirebaseAuth.instance.currentUser().then((res) {
-      print(res);
-      if (res != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Home(uid: res.uid)),
-        );
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => SignUp()),
-        );
-      }
-    });
-  }
-
+class AuthenticationWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new SplashScreen(
-        seconds: 5,
-        title: new Text(
-          'EXPANDE',
-          style: new TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
-        ),
-        image: Image.asset('assets/images/expande.png', fit: BoxFit.scaleDown),
-        backgroundColor: Colors.white,
-        styleTextUnderTheLoader: new TextStyle(),
-        photoSize: 100.0,
-        onClick: () => print("flutter"),
-        loaderColor: Colors.red);
+    final userFB = context.watch<auth.User>();
+
+    if (userFB != null) {
+      Navigator.of(context).popUntil(ModalRoute.withName('/'));
+      return Home();
+    }
+    return SignIn();
   }
 }

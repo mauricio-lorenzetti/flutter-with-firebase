@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import 'email_login.dart';
 import 'email_signup.dart';
 
-class SignUp extends StatelessWidget {
+class SignIn extends StatelessWidget {
   final String title = "Sign Up";
+  final GoogleSignIn googleSignIn = GoogleSignIn();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,14 +45,9 @@ class SignUp extends StatelessWidget {
                 child: SignInButton(
                   Buttons.Google,
                   text: "Sign up with Google",
-                  onPressed: () {},
-                )),
-            Padding(
-                padding: EdgeInsets.all(10.0),
-                child: SignInButton(
-                  Buttons.Twitter,
-                  text: "Sign up with Twitter",
-                  onPressed: () {},
+                  onPressed: () {
+                    signInWithGoogle();
+                  },
                 )),
             Padding(
                 padding: EdgeInsets.all(10.0),
@@ -64,5 +64,29 @@ class SignUp extends StatelessWidget {
                     }))
           ]),
         ));
+  }
+
+  Future<UserCredential> signInWithGoogle() async {
+    // Trigger the authentication flow
+    final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
+
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+
+    // Create a new credential
+    final GoogleAuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    // Once signed in, return the UserCredential
+    return await FirebaseAuth.instance.signInWithCredential(credential);
+  }
+
+  Future<void> signOutGoogle() async {
+    await googleSignIn.signOut();
+
+    print("User Signed Out");
   }
 }
